@@ -1,7 +1,7 @@
 # Onera: Interactive Sleep EEG Analysis
 
 
-Onera (derived from the Ancient Greek *Oneira* / ὄνειρα, meaning "dream") is an interactive, Python-based analytical notebook for sleep EEG and polysomnography (PSG) data. Built on the [Marimo](https://marimo.io/) framework, it provides an end-to-end pipeline for macro-sleep architecture, quantitative EEG (qEEG) spectral analysis, and pre-awakening micro-state profiling.
+Onera is an interactive, Python-based analytical notebook for sleep EEG and polysomnography (PSG) data. Built on the [Marimo](https://marimo.io/) framework, it provides an end-to-end pipeline for macro-sleep architecture, quantitative EEG (qEEG) spectral analysis, and pre-awakening micro-state profiling.
 
 ---
 
