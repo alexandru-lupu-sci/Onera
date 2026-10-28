@@ -21,7 +21,7 @@ Onera is an interactive, Python-based analytical notebook for sleep EEG and poly
 Onera automatically scans raw data and marker directories using standard BrainVision file patterns:
 
 ```text
-XXXX_YY_ZZZZ.(eeg / vhdr / vmrk / Markers)
+XXXX_YY_ZZZZ(.eeg / .vhdr / .vmrk / .Markers)
 ```
 
 - **`XXXX`**: Participant identifier (e.g., `DS01`, `DM05`)
