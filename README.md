@@ -28,8 +28,6 @@ XXXX_YY_ZZZZ.(eeg / vhdr / vmrk / Markers)
 - **`YY`**: Condition or night identifier (e.g., `2`, `adapt`, `exp`)
 - **`ZZZZ`**: Acquisition timestamp or session ID (not strictly required for processing)
 
-*Note: Files with the same prefix but different formats (.eeg, .vmrk, etc.) are automatically linked and processed as a single continuous recording.*
-
 ---
 
 ## Quick Start
