@@ -1,12 +1,11 @@
-Onera: Interactive Sleep EEG Analysis
+# Onera: Interactive Sleep EEG Analysis
 
-![Python 39](https://img.shields.io/badge/python-3.9+-blue.svg)
 
 Onera (derived from the Ancient Greek *Oneira* / ὄνειρα, meaning "dream") is an interactive, Python-based analytical notebook for sleep EEG and polysomnography (PSG) data. Built on the [Marimo](https://marimo.io/) framework, it provides an end-to-end pipeline for macro-sleep architecture, quantitative EEG (qEEG) spectral analysis, and pre-awakening micro-state profiling.
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 - **Macro-Sleep Architecture (Hypnogram):** Whole-night hypnogram plotting with automated 24-hour real-time axis synchronization and customizable, staggered event marker overlays (e.g., auditory stimulation, awakenings).
 - **Pre-Awakening Stage Profiling:** Micro-state analysis isolating a configurable window (default: 10 minutes) prior to targeted awakenings, complete with stimulation duration tracking.
@@ -33,7 +32,7 @@ XXXX_YY_ZZZZ.(eeg / vhdr / vmrk / Markers)
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Prerequisites
 
@@ -70,4 +69,4 @@ marimo edit Onera.py
 ## 👤 Author
 
 **Alexandru Lupu**  
-GitHub: [@alexandru-lupu-sci
+GitHub: [@alexandru-lupu-sci](https://github.com/alexandru-lupu-sci)
