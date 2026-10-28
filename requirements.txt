@@ -1,0 +1,13 @@
+
+
+marimo
+
+mne
+
+yasa
+
+pandas
+
+numpy
+
+matplotlib
