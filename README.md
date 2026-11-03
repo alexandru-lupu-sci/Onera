@@ -42,10 +42,10 @@ XXXX_YY_ZZZZ(.eeg / .vhdr / .vmrk / .Markers)
 
 ---
 
-## 🚀 Quick Start
+## Download
 
 ### 1. Prerequisites
-Ensure you have **Python 3.10+** installed on your system.
+Ensure you have [**Python 3.10+**](https://www.python.org/downloads/) installed on your system.
 
 ### 2. Installation
 Clone this repository and install the required dependencies:
