@@ -24,7 +24,7 @@ Onera is built to clinical and research qEEG specifications, prioritizing mathem
 - **Interactive Pre-Processing:** Automated BrainVision loading, dynamic mastoid or custom re-referencing (e.g., `M1, M2`), customizable FIR bandpass/notch filtering (`MNE-Python`), and Before/After cortical PSD validation plots.
 - **Automated Artifact Rejection:** Multi-criterion epoch thresholding that adapts to the recording's native sampling rate to reject flatlines (bridged/detached electrodes), peak-to-peak voltage excursions, fast voltage steps, and high-frequency EMG bursts.
 - **Quantitative Spectral Analysis & Topomaps:** Absolute ($\mu\text{V}^2$) and Relative (%) power spectral density computation across clinical sleep bands (`SWA, Theta, Alpha, Slow/Fast Spindles, Beta`) or standard EEG bands, accompanied by 10–20 scalp topomaps.
-- **Batch Export Analytics:** One-click `.csv` exports for single-awakening tables as well as a **Whole-Night Batch Summary** that aggregates clean epoch counts, sleep stages, and channel-wise spectral bandpower across all awakenings simultaneously.
+- **Batch Export Analytics:** Easy `.csv` exports for single-awakening tables as well as a **Whole-Night Batch Summary** that aggregates clean epoch counts, sleep stages, and channel-wise spectral bandpower across all awakenings simultaneously.
 
 ---
 
