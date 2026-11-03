@@ -77,8 +77,8 @@ marimo edit Onera-v1.py
 
 If you use Onera in your published research, please cite this repository alongside the core analytical toolboxes it utilizes:
 
-- **MNE-Python:** Gramfort et al. (2013). MEG and EEG data analysis with MNE-Python. *Frontiers in Neuroscience*, 7, 267.
-- **YASA:** Vallat, R., & Walker, M. P. (2021). An open-source, high-performance tool for automated sleep staging in Python. *eLife*, 10, e70092.
+- **MNE-Python:** Alexandre Gramfort, Martin Luessi, Eric Larson, Denis A. Engemann, Daniel Strohmeier, Christian Brodbeck, Roman Goj, Mainak Jas, Teon Brooks, Lauri Parkkonen, and Matti S. Hämäläinen. MEG and EEG data analysis with MNE-Python. Frontiers in Neuroscience, 7(267):1–13, 2013. doi:10.3389/fnins.2013.00267.
+- **YASA:** Vallat, Raphael, and Matthew P. Walker. “An open-source, high-performance tool for automated sleep staging.” Elife 10 (2021). doi: https://doi.org/10.7554/eLife.70092
 
 *(A Zenodo DOI for citing the Onera pipeline directly will be provided upon release).*
 
