@@ -88,4 +88,5 @@ If you use Onera in your published research, please cite this repository alongsi
 
 **Alexandru Lupu**  
 University of Fribourg, Switzerland
+
 GitHub: [@alexandru-lupu-sci](https://github.com/alexandru-lupu-sci)
