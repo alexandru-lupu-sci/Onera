@@ -6,7 +6,7 @@ The pipeline specializes in **pre-awakening micro-state profiling**, isolating t
 
 ---
 
-## 🔬 Scientific Rigor & Signal Processing
+## Scientific Rigor & Signal Processing
 
 Onera is built to clinical and research qEEG specifications, prioritizing mathematical accuracy and artifact prevention:
 
@@ -17,7 +17,7 @@ Onera is built to clinical and research qEEG specifications, prioritizing mathem
 
 ---
 
-## ⚡ Core Features
+## Core Features
 
 - **Macro-Sleep Architecture (Hypnograms):** Whole-night hypnogram visualization (supporting both **AASM** and **R&K** scoring conventions) with 24-hour real-time clock alignment, shaded pre-awakening windows, staggered abbreviated event tracks, and a dedicated right-hand marker legend.
 - **Pre-Awakening Stage Profiling:** Chronological micro-state extraction isolating a configurable window (e.g., 10 minutes) prior to each targeted awakening, including last stage at awakening, dominant stage classification, and stimulus-to-awakening latency tracking.
