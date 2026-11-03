@@ -60,7 +60,7 @@ pip install -r requirements.txt
 Run Onera as an interactive Marimo application in your browser:
 
 ```bash
-marimo edit Onera-v1.8.py
+marimo edit Onera-v1.py
 ```
 
 ---
