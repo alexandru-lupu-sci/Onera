@@ -50,13 +50,29 @@ Participant_Condition_OptionalID(.vhdr / .eeg / .vmrk / .Markers)
 Install **Python 3.11** or newer.
 
 ### 2. Installation
-Clone the repository and install the required packages:
+Clone the repository:
 
 ```bash
 git clone https://github.com/alexandru-lupu-sci/Onera.git
 cd Onera
+```
+Create a new environment:
+
+```
+# On Windows:
+python -m venv onera_env
+onera_env\Scripts\activate
+
+# On macOS and Linux:
+python3 -m venv onera_env
+source onera_env/bin/activate
+```
+
+And install packages:
+```
 pip install -r requirements.txt
 ```
+
 
 ### 3. Launching the Pipeline
 To open Onera in interactive edit/dashboard mode in your browser:
