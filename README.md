@@ -111,7 +111,7 @@ conda create --name onera_env python=3.11
 ```
 conda activate onera_env
 ```
-Now instead of "(base)C:\", you should see "(onera_env)C:\".
+Now instead of "(base)C:\...", you should see "(onera_env)C:\...".
 
 2.4 Download the Onera files from my GitHub:
 - Click the green "Code" button and click "Download ZIP".
