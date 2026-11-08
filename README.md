@@ -47,7 +47,7 @@ Participant_Condition_OptionalID(.vhdr / .eeg / .vmrk / .Markers)
 ## Quick Start
 
 ### 1. Prerequisites
-Install **Python 3.10** or newer.
+Install **Python 3.11** or newer.
 
 ### 2. Installation
 Clone the repository and install the required packages:
