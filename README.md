@@ -57,13 +57,13 @@ git clone https://github.com/alexandru-lupu-sci/Onera.git
 cd Onera
 ```
 Create a new environment:
-
+On Windows:
 ```
-# On Windows:
 python -m venv onera_env
 onera_env\Scripts\activate
-
-# On macOS and Linux:
+```
+On macOS and Linux:
+```
 python3 -m venv onera_env
 source onera_env/bin/activate
 ```
