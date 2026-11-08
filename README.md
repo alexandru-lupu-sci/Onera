@@ -102,6 +102,7 @@ marimo run Onera_Beta-v1.17.py
 
 ### 2. Create environment, download files, and install requirements
 2.1 Open Miniforge Prompt
+
 2.2 Create a dedicated environment for Onera:
 ```
 conda create --name onera_env python=3.11
