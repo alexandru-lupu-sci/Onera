@@ -141,7 +141,7 @@ python -m marimo edit Onera_Beta-v1.17.py
 - Insert the file path to the Onera folder (cf. 2.5)
 - Run Onera (cf. 3)
 
-###Tips:
+### Tips:
 If you already have an IDE (like Spyder, PyCharm, Visual Studio,...), you can also create a new project in your IDE, set the interpreter to the Conda environment you just created. Put the Onera.py file into your project folder. Inside your project click on the Console and type "marimo edit" and click on the Onera file to launch it.
 
 ---
