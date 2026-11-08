@@ -91,9 +91,13 @@ marimo run Onera_Beta-v1.17.py
 ## Installation for Newbies
 
 ### 1. Install Miniforge (a light and effective environment and librarie manager)
+
 1.1 Click this link to the Miniforge GitHub page : [Install Miniforge](https://github.com/conda-forge/miniforge)
+
 1.2 Look at the side bar on the right, look for "Releases".
+
 1.3 Click on the latest release (e.g. Release 26.9.4-2 (Latest)).
+
 1.4 Click on the install file that corresponds to your PC and type of CPU architecture (e.g. for Windows with x86 architecture in 64 bits (most PCs) it's the "-Windows-x86_64.exe" file). Proceed with the installation steps.
 
 ### 2. Create environment, download files, and install requirements
