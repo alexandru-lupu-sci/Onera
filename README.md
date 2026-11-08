@@ -62,13 +62,13 @@ pip install -r requirements.txt
 To open Onera in interactive edit/dashboard mode in your browser:
 
 ```bash
-marimo edit Onera-v1.10.py
+marimo edit Onera_Beta-v1.17.py
 ```
 
 To launch Onera directly as a clean web application (code hidden by default):
 
 ```bash
-marimo run Onera-v1.10.py
+marimo run Onera_Beta-v1.17.py
 ```
 
 ---
