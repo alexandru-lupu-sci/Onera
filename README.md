@@ -44,7 +44,7 @@ Participant_Condition_OptionalID(.vhdr / .eeg / .vmrk / .Markers)
 
 ---
 
-## Quick Start
+## Installation
 
 ### 1. Prerequisites
 Install **Python 3.11** or newer.
@@ -88,7 +88,59 @@ marimo run Onera_Beta-v1.17.py
 ```
 
 ---
+## Installation for Newbies
 
+### 1. Install Miniforge (a light and effective environment and librarie manager)
+1.1 Click this link to the Miniforge GitHub page : [Install Miniforge](https://github.com/conda-forge/miniforge)
+1.2 Look at the side bar on the right, look for "Releases".
+1.3 Click on the latest release (e.g. Release 26.9.4-2 (Latest)).
+1.4 Click on the install file that corresponds to your PC and type of CPU architecture (e.g. for Windows with x86 architecture in 64 bits (most PCs) it's the "-Windows-x86_64.exe" file). Proceed with the installation steps.
+
+### 2. Create environment, download files, and install requirements
+2.1 Open Miniforge Prompt
+2.2 Create a dedicated environment for Onera:
+```
+conda create --name onera_env python=3.11
+```
+2.3 Activate your environment:
+```
+conda activate onera_env
+```
+Now instead of "(base)C:\", you should see "(onera_env)C:\".
+
+2.4 Download the Onera files from my GitHub:
+- Click the green "Code" button and click "Download ZIP".
+- Unzip the folder.
+- Put this folder wherever you want in your PC.
+
+2.5 Access the Onera folder in Miniforge:
+Type this code in Miniforge (make sure to replace everything after "cd" with the path to where you just put the Onera folder:
+```
+cd C:\Users\YourName\Documents\Onera
+```
+
+2.6 Install the packages needed to run Onera (they are all already listed in the requirements.txt). Run this code:
+```
+pip install -r requirements.txt
+```
+Whenever asked (y/n)? type "y" and click ENTER.
+
+### 3. Run Onera
+```
+python -m marimo edit Onera_Beta-v1.17.py
+```
+
+## To run Onera in general
+
+- Open Miniforge Prompt
+- Activate your environemnt (cf. 2.3)
+- Insert the file path to the Onera folder (cf. 2.5)
+- Run Onera (cf. 3)
+
+###Tips:
+If you already have an IDE (like Spyder, PyCharm, Visual Studio,...), you can also create a new project in your IDE, set the interpreter to the Conda environment you just created. Put the Onera.py file into your project folder. Inside your project click on the Console and type "marimo edit" and click on the Onera file to launch it.
+
+---
 ## Usage Tips
 
 - **Toggle App View:** When using `marimo edit`, press `Ctrl + .` (or click the preview icon in the bottom-right corner) to switch between code view and the clean UI dashboard.
