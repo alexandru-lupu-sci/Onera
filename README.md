@@ -44,106 +44,51 @@ Participant_Condition_OptionalID(.vhdr / .eeg / .vmrk / .Markers)
 
 ---
 
-## Installation
+## Quick Start
 
-### 1. Prerequisites
-Install **Python 3.11** or newer.
+Onera uses [`uv`](https://docs.astral.sh/uv/), a modern Python package and project manager. It automatically handles Python versions, virtual environments, and dependencies so you don't have to.
 
-### 2. Installation
-Clone the repository:
+### 1. Install `uv`
+If you don't have `uv` installed, open your terminal (Command Prompt/PowerShell on Windows, or Terminal on macOS/Linux) and run:
 
-```bash
+**Windows:**
+```
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+**MacOS / Linux**
+```
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### 2. Download Onera
+Open your terminal and navigate to where you want to save the project (e.g., your Documents folder).
+```
+cd Documents
+```
+Choose one of the methods below:
+
+**Option A: Using [Git](https://git-scm.com/downloads) (Recommended)**
+You can download it by clicking Git.
+```
 git clone https://github.com/alexandru-lupu-sci/Onera.git
+```
+```
 cd Onera
 ```
-Create a new environment:
-On Windows:
+
+**Option B: Direct Download (If you don't have Git)**
+1. On the right side of this GitHub page, click on the **Releases** section.
+2. Download the latest **Source code (zip)**.
+3. Extract the `.zip` folder, open your terminal, and navigate into it (e.g. Documents folder):
+
 ```
-python -m venv onera_env
-onera_env\Scripts\activate
-```
-On macOS and Linux:
-```
-python3 -m venv onera_env
-source onera_env/bin/activate
+cd Documents/Onera
 ```
 
-And install packages:
+### 3. Launch the pipeline
 ```
-pip install -r requirements.txt
+uv run marimo edit Onera_v1.0.py
 ```
-
-
-### 3. Launching the Pipeline
-To open Onera in interactive edit/dashboard mode in your browser:
-
-```bash
-marimo edit Onera_Beta-v1.17.py
-```
-
-To launch Onera directly as a clean web application (code hidden by default):
-
-```bash
-marimo run Onera_Beta-v1.17.py
-```
-
----
-## Installation for Newbies
-
-### 1. Install Miniforge (a light and effective environment and librarie manager)
-
-1.1 Click this link to the Miniforge GitHub page : [Install Miniforge](https://github.com/conda-forge/miniforge)
-
-1.2 Look at the side bar on the right, look for "Releases".
-
-1.3 Click on the latest release (e.g. Release 26.9.4-2 (Latest)).
-
-1.4 Click on the install file that corresponds to your PC and type of CPU architecture (e.g. for Windows with x86 architecture in 64 bits (most PCs) it's the "-Windows-x86_64.exe" file). Proceed with the installation steps.
-
-### 2. Create environment, download files, and install requirements
-2.1 Open Miniforge Prompt
-
-2.2 Create a dedicated environment for Onera:
-```
-conda create --name onera_env python=3.11
-```
-2.3 Activate your environment:
-```
-conda activate onera_env
-```
-Now instead of "(base)C:\...", you should see "(onera_env)C:\...".
-
-2.4 Download the Onera files from my GitHub:
-- Click the green "Code" button and click "Download ZIP".
-- Unzip the folder.
-- Put this folder wherever you want in your PC.
-
-2.5 Access the Onera folder in Miniforge:
-Type this code in Miniforge (make sure to replace everything after "cd" with the path to where you just put the Onera folder:
-```
-cd C:\Users\YourName\Documents\Onera
-```
-
-2.6 Install the packages needed to run Onera (they are all already listed in the requirements.txt). Run this code:
-```
-pip install -r requirements.txt
-```
-Whenever asked (y/n)? type "y" and click ENTER.
-
-### 3. Run Onera
-```
-python -m marimo edit Onera_Beta-v1.17.py
-```
-
-## To run Onera in general
-
-- Open Miniforge Prompt
-- Activate your environemnt (cf. 2.3)
-- Insert the file path to the Onera folder (cf. 2.5)
-- Run Onera (cf. 3)
-
-### Tips:
-If you already have an IDE (like Spyder, PyCharm, Visual Studio,...), you can also create a new project in your IDE, set the interpreter to the Conda environment you just created. Put the Onera.py file into your project folder. Inside your project click on the Console and type "marimo edit" and click on the Onera file to launch it.
 
 ---
 ## Usage Tips
