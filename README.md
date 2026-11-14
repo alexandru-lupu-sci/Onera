@@ -68,7 +68,7 @@ cd Documents
 Choose one of the methods below:
 
 **Option A: Using [Git](https://git-scm.com/downloads) (Recommended)**
-You can download it by clicking Git above.
+You can download it by clicking Git.
 ```
 git clone https://github.com/alexandru-lupu-sci/Onera.git
 ```
