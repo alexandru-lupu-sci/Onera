@@ -55,7 +55,7 @@ If you don't have `uv` installed, open your terminal (Command Prompt/PowerShell 
 ```
 powershell -ExecutionPolicy ByPass -c "irm [https://astral.sh/uv/install.ps1](https://astral.sh/uv/install.ps1) | iex"
 ```
-**MacOS / Linux
+**MacOS / Linux**
 ```
 curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
 ```
