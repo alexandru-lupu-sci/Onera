@@ -53,22 +53,41 @@ If you don't have `uv` installed, open your terminal (Command Prompt/PowerShell 
 
 **Windows:**
 ```
-powershell -ExecutionPolicy ByPass -c "irm [https://astral.sh/uv/install.ps1](https://astral.sh/uv/install.ps1) | iex"
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 **MacOS / Linux**
 ```
-curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ### 2. Download Onera
+Open your terminal and navigate to where you want to save the project (e.g., your Documents folder).
 ```
-git clone [https://github.com/alexandru-lupu-sci/Onera.git](https://github.com/alexandru-lupu-sci/Onera.git)
+cd Documents
+```
+Choose one of the methods below:
+
+**Option A: Using [Git](https://git-scm.com/downloads) (Recommended)**
+You can download it by clicking Git above.
+```
+git clone https://github.com/alexandru-lupu-sci/Onera.git
+```
+```
 cd Onera
+```
+
+**Option B: Direct Download (If you don't have Git)**
+1. On the right side of this GitHub page, click on the **Releases** section.
+2. Download the latest **Source code (zip)**.
+3. Extract the `.zip` folder, open your terminal, and navigate into it (e.g. Documents folder):
+
+```
+cd Documents/Onera
 ```
 
 ### 3. Launch the pipeline
 ```
-uv run marimo edit Onera_Beta-v1.20.py
+uv run marimo edit Onera_v1.0.py
 ```
 
 ---
