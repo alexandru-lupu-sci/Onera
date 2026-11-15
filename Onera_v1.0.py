@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.25.1"
+__generated_with = "0.25.2"
 app = marimo.App(width="medium")
 
 
@@ -176,6 +176,41 @@ def _(Path, mo, paths_form):
         df["Type"] = df["Type"].astype(str).str.strip()
         return df.dropna(subset=["Position"]).sort_values("Position").reset_index(drop=True)
 
+    # Function to compute the time offset (in seconds) between a cropped .Markers file (starting at LightsOff)
+    # and the uncropped raw .vmrk/.eeg recording (starting at New Segment)
+    def get_raw_marker_offset_sec(df_markers, participant, condition, marker_fs, raw_fs=None):
+        if df_markers.empty:
+            return 0.0
+        try:
+            vmrk_path = get_file_path(data_dir, participant, condition, ".vmrk")
+            df_vmrk = read_brainvision_markers(vmrk_path)
+            if df_vmrk.empty:
+                return 0.0
+        except Exception:
+            return 0.0
+
+        _r_fs = raw_fs if raw_fs is not None else marker_fs
+        _m_non_stage = df_markers[~df_markers["Type"].str.contains("Sleep Stage|New Segment", case=False, na=False)].copy()
+        _v_non_stage = df_vmrk[~df_vmrk["Type"].str.contains("Sleep Stage|New Segment", case=False, na=False)].copy()
+        if _m_non_stage.empty or _v_non_stage.empty:
+            return 0.0
+
+        _m_non_stage["_norm"] = _m_non_stage["Description"].str.lower().str.replace(r'[\s_\-]+', '', regex=True)
+        _v_non_stage["_norm"] = _v_non_stage["Description"].str.lower().str.replace(r'[\s_\-]+', '', regex=True)
+
+        # Match the first shared experimental/anchor marker (e.g., LightsOff / Lights off)
+        for _, _m_row in _m_non_stage.iterrows():
+            _norm_label = _m_row["_norm"]
+            if not _norm_label:
+                continue
+            _v_matches = _v_non_stage[_v_non_stage["_norm"] == _norm_label]
+            if not _v_matches.empty:
+                _t_m = (_m_row["Position"] - 1.0) / float(marker_fs)
+                _t_v = (_v_matches.iloc[0]["Position"] - 1.0) / float(_r_fs)
+                _offset = _t_v - _t_m
+                return max(0.0, float(_offset))
+        return 0.0
+
     # Find all marker files (.Markers or .vmrk) in the markers folder
     all_marker_files = []
     if markers_dir.exists():
@@ -277,6 +312,7 @@ def _(Path, mo, paths_form):
         data_dir,
         fs_input,
         get_file_path,
+        get_raw_marker_offset_sec,
         markers_dir,
         mne,
         night_dropdown,
@@ -650,6 +686,7 @@ def _(
     df_stages,
     fs_input,
     get_file_path,
+    get_raw_marker_offset_sec,
     hypno_markers_select,
     mo,
     pd,
@@ -821,6 +858,7 @@ def _(
         _start_time = None
         try:
             _vmrk_file = get_file_path(data_dir, current_participant, current_night, ".vmrk")
+            _raw_offset_sec_hyp = get_raw_marker_offset_sec(df_markers, current_participant, current_night, _fs)
             with open(_vmrk_file, 'r', encoding='utf-8', errors='ignore') as _f_vmrk:
                 for _line in _f_vmrk:
                     if 'New Segment' in _line:
@@ -829,7 +867,7 @@ def _(
                             _time_str = _parts[5].strip()
                             if len(_time_str) >= 14:
                                 _start_time = _datetime.datetime.strptime(_time_str[:14], "%Y%m%d%H%M%S")
-                                _start_time += _datetime.timedelta(hours=_offset_hours)
+                                _start_time += _datetime.timedelta(hours=_offset_hours + (_raw_offset_sec_hyp / 3600.0))
                         break
         except Exception:
             pass
@@ -886,9 +924,9 @@ def _(mo, window_size_input):
 
     To optimize memory and computation speed, signal processing is applied specifically to the **{window_size_input.value}-minute** segments preceding each targeted awakening.
 
-    1. **Edge-Artifact Buffer Padding:** Each segment is extracted with an extra $\pm 20\text{{ s}}$ buffer of continuous raw data on both ends prior to filtering. After filtering, the $20\text{{ s}}$ buffers are cropped away so FIR filter edge ringing never contaminates the analysis window.
-    2. **Channel Typing & Re-Referencing:** Channels are automatically classified into cortical EEG, EOG, chin EMG, ECG, and Misc. Bad/detached electrodes are dropped prior to linking cortical EEG channels to the selected reference electrodes (e.g., mastoids `M1`, `M2`).
-    3. **Bandpass Filtering (Zero-Phase FIR):** Cortical EEG and EOG channels are filtered using a zero-phase finite impulse response (`firwin`, Hamming window) bandpass filter (default $0.3\text{{–}}45.0\text{{ Hz}}$). Chin EMG channels are filtered separately between $10\text{{–}}90\text{{ Hz}}$ to isolate high-frequency muscle tone from slow respiration drift.
+    1. **Timeline Synchronization & Buffer Padding:** Automatically aligns cropped `.Markers` timelines (starting at `LightsOff`) with uncropped raw `.eeg` recordings. Each segment is extracted with an extra $\pm 20\text{{ s}}$ buffer of continuous raw data on both ends prior to filtering, then cropped back after filtering so FIR filter edge ringing never contaminates the analysis window.
+    2. **Channel Typing & Re-Referencing:** Channels are automatically classified into cortical EEG, EOG, EMG (chin/facial), ECG, and Misc (respiration, SCR/EDA). Bad/detached electrodes are dropped prior to linking cortical EEG channels to the selected reference electrodes (e.g., mastoids `M1`, `M2`).
+    3. **Bandpass Filtering (Zero-Phase FIR):** Cortical EEG and EOG channels are filtered using a zero-phase finite impulse response (`firwin`, Hamming window) bandpass filter (default $0.3\text{{–}}45.0\text{{ Hz}}$). EMG channels are filtered separately between $10\text{{–}}90\text{{ Hz}}$ to isolate high-frequency muscle tone from slow respiration drift.
     4. **Powerline Notch Filtering:** Applies a zero-phase notch filter at the fundamental line frequency (e.g., $50\text{{ Hz}}$) and all harmonics below the Nyquist frequency across EEG, EOG, and EMG channels.
     """)
     return
@@ -955,8 +993,10 @@ def _(
     current_night,
     current_participant,
     data_dir,
+    df_markers,
     fs_input,
     get_file_path,
+    get_raw_marker_offset_sec,
     h_freq_input,
     l_freq_input,
     mne,
@@ -982,14 +1022,14 @@ def _(
             # Identify eye movement channels
             elif any(k in ch_up for k in ('EOG', 'LOC', 'ROC', 'HEOG', 'VEOG')):
                 ch_types[ch] = 'eog'
-            # Identify chin/muscle channels
+            # Identify chin/facial muscle channels
             elif any(k in ch_up for k in ('EMG', 'CHIN', 'SUBMENT')):
                 ch_types[ch] = 'emg'
             # Identify heart rate channels
             elif any(k in ch_up for k in ('ECG', 'EKG', 'HEART')):
                 ch_types[ch] = 'ecg'
-            # Identify respiration, oximetry, and body position sensors
-            elif any(k in ch_up for k in ('RESP', 'FLOW', 'THOR', 'ABDO', 'SNORE', 'SPO2', 'PLETH', 'POS')):
+            # Identify respiration, oximetry, electrodermal (SCR/EDA/GSR), and body position sensors
+            elif any(k in ch_up for k in ('RESP', 'FLOW', 'THOR', 'ABDO', 'SNORE', 'SPO2', 'PLETH', 'POS', 'SCR', 'EDA', 'GSR')):
                 ch_types[ch] = 'misc'
             # Treat all remaining channels (including TP9/TP10 when not used as references) as cortical EEG
             else:
@@ -1018,6 +1058,16 @@ def _(
         raw_file = get_file_path(data_dir, current_participant, current_night, ".vhdr")
         raw = mne.io.read_raw_brainvision(raw_file, preload=False, verbose='ERROR')
 
+        # Detect if the .Markers file was cropped at LightsOff relative to the uncropped raw .eeg/.vmrk
+        _raw_offset_sec = get_raw_marker_offset_sec(
+            df_markers, current_participant, current_night, _marker_fs, raw_fs=raw.info['sfreq']
+        )
+        # Safety check: only apply offset if the last awakening + offset fits inside the raw recording duration
+        if not awakenings.empty:
+            _last_aw_sec = ((awakenings["Position"].max() - 1.0) / _marker_fs) + _raw_offset_sec
+            if _last_aw_sec > raw.times[-1] + 1.0:
+                _raw_offset_sec = 0.0
+
         # Remove any bad channels selected by the user
         _bads_to_drop = [ch for ch in bad_channels_input.value if ch in raw.ch_names]
         if _bads_to_drop:
@@ -1038,8 +1088,8 @@ def _(
             for _idx, (_, _row) in enumerate(awakenings.iterrows()):
                 bar.update(title=f"Filtering Awakening {_idx + 1} of {len(awakenings)}...")
 
-                # Compute the start and end times (in seconds) for the pre-awakening window
-                _t_end = min(_row["Position"] / _marker_fs, raw.times[-1])
+                # Compute the start and end times (in seconds) in the raw EEG file for the pre-awakening window
+                _t_end = min(((_row["Position"] - 1.0) / _marker_fs) + _raw_offset_sec, raw.times[-1])
                 _t_start = max(0.0, _t_end - _analysis_win)
 
                 # Save an unfiltered (but re-referenced) copy of the first awakening for the before/after comparison plot
@@ -1078,7 +1128,7 @@ def _(
                         verbose='ERROR'
                     )
 
-                # Filter the EMG channel between 10 and 90 Hz to isolate high-frequency muscle tone
+                # Filter the EMG channels between 10 and 90 Hz to isolate high-frequency muscle tone
                 if 'emg' in _segment:
                     _emg_hfreq = min(90.0, (_segment.info['sfreq'] / 2.0) - 1.0)
                     if _emg_hfreq > 15.0:
@@ -1124,7 +1174,12 @@ def _(
 
             # Display the completion message and filter validation plots
             output_ui_prep = mo.vstack([
-                mo.md(f"✅ **Successfully preprocessed {len(preprocessed_segments)} awakenings** (Window: {window_size_input.value} min | Raw Sampling Rate: `{raw.info['sfreq']} Hz` | Excluded Channels: `{_bads_to_drop if _bads_to_drop else 'None'}`)"),
+                mo.md(
+                    f"✅ **Successfully preprocessed {len(preprocessed_segments)} awakenings** "
+                    f"(Window: {window_size_input.value} min | Raw Sampling Rate: `{raw.info['sfreq']} Hz` | "
+                    f"Raw LightsOff Offset: `+{_raw_offset_sec:.2f} s` | "
+                    f"Excluded Channels: `{_bads_to_drop if _bads_to_drop else 'None'}`)"
+                ),
                 mo.md("### Filter Validation (Awakening #1 — Pure EEG Channels)"),
                 fig_pre
             ])
@@ -1277,7 +1332,9 @@ def _(
         emg_picks = mne.pick_types(epochs.info, emg=True)
         _actual_sfreq = epochs.info['sfreq']
         _eeg_names = [epochs.ch_names[p] for p in eeg_picks]
+        _emg_names = [epochs.ch_names[p] for p in emg_picks]
         _chan_fail_counts = np.zeros(len(eeg_picks), dtype=int)
+        _emg_fail_counts = np.zeros(len(emg_picks), dtype=int)
 
         # Initialize counters for clean epochs and each artifact rejection category
         drop_counts = {
@@ -1324,9 +1381,11 @@ def _(
                     drop_counts["Voltage Step"] += 1
                     dropped = True
 
-            # Reject if the EMG channel exceeds the muscle activity threshold
-            if not dropped and len(emg_picks) > 0:
-                if np.any(np.ptp(_epoch[emg_picks], axis=1) > emg_slider.value * 1e-6):
+            # Track per-channel EMG failures and reject if any EMG channel exceeds the muscle activity threshold
+            if len(emg_picks) > 0:
+                _emg_ptp_vals = np.ptp(_epoch[emg_picks], axis=1)
+                _emg_fail_counts += (_emg_ptp_vals > emg_slider.value * 1e-6).astype(int)
+                if not dropped and np.any(_emg_ptp_vals > emg_slider.value * 1e-6):
                     drop_counts["EMG Activity"] += 1
                     dropped = True
 
@@ -1387,13 +1446,15 @@ def _(
             ax_after.text(0.5, 0.5, "⚠️ No clean epochs retained", ha='center', va='center', fontsize=12)
             ax_after.axis('off')
 
-        # List the top 5 EEG channels that triggered the most epoch rejections
+        # List the top 5 EEG or EMG channels that triggered the most epoch rejections
+        _all_diag_names = _eeg_names + _emg_names
+        _all_diag_counts = np.concatenate([_chan_fail_counts, _emg_fail_counts]) if (_eeg_names or _emg_names) else np.array([], dtype=int)
         _top_bad_str = "None"
-        if len(_eeg_names) > 0 and np.any(_chan_fail_counts > 0):
-            _sorted_idx = np.argsort(_chan_fail_counts)[::-1][:5]
+        if len(_all_diag_names) > 0 and np.any(_all_diag_counts > 0):
+            _sorted_idx = np.argsort(_all_diag_counts)[::-1][:5]
             _top_bad_str = ", ".join(
-                f"`{_eeg_names[idx]}` ({100.0 * _chan_fail_counts[idx] / max(1, len(epochs)):.0f}%)"
-                for idx in _sorted_idx if _chan_fail_counts[idx] > 0
+                f"`{_all_diag_names[idx]}` ({100.0 * _all_diag_counts[idx] / max(1, len(epochs)):.0f}%)"
+                for idx in _sorted_idx if _all_diag_counts[idx] > 0
             )
 
         # Combine the bar chart, retention summary, and before/after PSD plots into the UI
@@ -1402,7 +1463,7 @@ def _(
             fig_bar,
             mo.md(
                 f"**Final Clean Epochs Retained:** `{len(clean_epochs)}` / `{len(epochs)}` (`{100 * len(clean_epochs) / max(1, len(epochs)):.1f}%`)  \n"
-                f"**Top Artifact-Triggering EEG Channels:** {_top_bad_str} *(Tip: If one detached electrode is rejecting most epochs, exclude it in Pre-Processing)*"
+                f"**Top Artifact-Triggering Channels (EEG / EMG):** {_top_bad_str} *(Tip: If one detached or facial electrode is rejecting most epochs, exclude it in Pre-Processing)*"
             ),
             mo.md("---"),
             mo.md("### Signal Quality Comparison"),
@@ -1765,6 +1826,7 @@ def _(mo):
 
     - **Sub-Window Epoch Selection:** Aggregates all clean epochs whose temporal midpoint falls inside $[\text{Start Time},\, \text{Start Time} + \text{Width}]$.
     - **Fixed vs. Dynamic Colorbar Scaling:** *Fixed Scale* locks each band's colorbar to the $2\text{nd}\text{–}98\text{th}$ percentile across the entire pre-awakening window so color changes reflect true temporal amplitude shifts. *Dynamic Scale* rescales the colorbar at each time step to highlight local spatial topography (increases contrast locally).
+    - **Split-Screen Pre- vs. Post-Stimulus Mode:** Automatically locks onto the most recent experimental trigger in the window to compare Baseline ($[\text{Onset} - \text{Width},\, \text{Onset}]$) vs. Stimulation ($[\text{Onset},\, \text{Onset} + \text{Width}]$) topographies side-by-side, strictly excluding any epoch that straddles the exact stimulus onset. When *Dynamic Scale* is active in Split-Screen mode, colorbars are pair-locked across the Baseline and Stimulation rows for valid visual comparison.
     """)
     return
 
@@ -2906,7 +2968,7 @@ def _():
     # - _batch_ui              : UI stack displaying the combined session summary table for CSV export.
     #
     #
-    # Thanks for using my pipeline, don't hesitate to star it on GitHub is it has been useful to you!
+    # Thanks for using my pipeline, don't hesitate to star it on GitHub if it has been useful to you!
     return
 
 
