@@ -88,14 +88,19 @@ cd Documents/Onera
 
 ### 3. Launch the pipeline
 ```
-uv run marimo edit Onera_v1.0.py
+uv run marimo edit Onera_.py
+```
+- Replace the end "Onera_" with the program you want (e.g. ...Onera_PreAwakening, or upcoming ...Onera_SleepScorer).
+
+- **You can also launch the pipeline exclusively in App mode (no access to the code):**
+```
+uv run marimo app Onera_.py
 ```
 
 ---
 ## Usage Tips
 
 - **Toggle App View:** When using `marimo edit`, press `Ctrl + .` (or click the preview icon in the bottom-right corner) to switch between code view and the clean UI dashboard.
-- **Reactive Updates:** Marimo automatically updates all plots and tables whenever you change a parameter. If you want to change several settings at once without waiting for intermediate recalculations, click the **Stop** (square) button in the bottom-right corner, adjust your settings, and click **Run** (play).
 
 ---
 
