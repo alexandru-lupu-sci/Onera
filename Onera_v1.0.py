@@ -38,7 +38,7 @@ def _(mo):
     ### UI Navigation
     - Toggle **App View** (`Ctrl + .` or bottom-right icon) to hide code cells or to show them when in App View.
     - Use the **Table of Contents** Click `View outline` (left sidebar)
-    - **Performance Tip:** Marimo is reactive and updates downstream cells automatically after a change has been done. After changing multiple settings, click **Stop** (square button) to stop the current update and use the latest settings.
+    - **Performance Tip:** Marimo is reactive and updates downstream cells automatically after a change has been done. After changing multiple settings, click **Stop** (square button) to stop the current update and automatically relaunch it with the latest settings.
     """)
     return
 
@@ -131,9 +131,10 @@ def _(Path, mo, paths_form):
     import re
     import matplotlib.ticker as ticker
 
-    # Extract values from the submitted form
-    data_dir = Path(paths_form.value["data_dir"])
-    markers_dir = Path(paths_form.value["markers_dir"])
+    # Extract values from the submitted form (fall back to data_dir if markers_dir is left blank)
+    data_dir = Path(paths_form.value["data_dir"].strip())
+    _m_str = paths_form.value["markers_dir"].strip()
+    markers_dir = Path(_m_str) if _m_str else data_dir
 
     # Function to find a specific file matching the participant, condition, and file extension
     def get_file_path(directory, participant, condition, extension):
