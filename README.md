@@ -138,7 +138,7 @@ If you use Onera in your research, please cite this software along with the core
 <!-- TODO after the first Zenodo release: add the DOI badge here, e.g.
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
 
-* **Onera:** Lupu, A. (2026). *Onera: Interactive Sleep EEG Analysis Pipeline* (Version 1.0.0) [Computer software]. University of Fribourg. https://github.com/alexandru-lupu-sci/Onera
+* **Onera:** Lupu, A. (2026) Onera: Interactive Sleep EEG Analysis Suite (Version 1.0.0) [Computer software]. https://github.com/alexandru-lupu-sci/Onera
 * **MNE-Python:** Gramfort, A., Luessi, M., Larson, E., Engemann, D. A., Strohmeier, D., Brodbeck, C., ... & Hämäläinen, M. (2013). MEG and EEG data analysis with MNE-Python. *Frontiers in Neuroscience*, 7, 267. [doi:10.3389/fnins.2013.00267](https://doi.org/10.3389/fnins.2013.00267)
 * **YASA:** Vallat, R., & Walker, M. P. (2021). An open-source, high-performance tool for automated sleep staging in Python. *eLife*, 10, e70092. [doi:10.7554/eLife.70092](https://doi.org/10.7554/eLife.70092)
 
