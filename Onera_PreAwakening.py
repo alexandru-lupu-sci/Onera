@@ -7,7 +7,7 @@ app = marimo.App(width="medium")
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # Onera_v1.0
+    # Onera PreAwakening
     """)
     return
 
@@ -81,12 +81,12 @@ def _():
         """
     ).batch(
         data_dir=mo.ui.text(
-            value=r"Z:\Alex\RAW_Sleep", 
+            value="K:\\", 
             label="📂 Raw Data Path (.vhdr, .vmrk, .eeg):",
             full_width=True
         ),
         markers_dir=mo.ui.text(
-            value=r"Z:\Alex\Markers", 
+            value="K:\\", 
             label="📂 Markers Path (.Markers / .vmrk):",
             full_width=True
         )
