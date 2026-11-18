@@ -117,7 +117,7 @@ uv sync
 3. **Select the Python interpreter in VS Code:** Open the Command Palette (`Ctrl + Shift + P`), type and select **`Python: Select Interpreter`**, and choose the project's virtual environment interpreter (`.\.venv\Scripts\python.exe` on Windows or `./.venv/bin/python` on macOS/Linux, typically listed as `('.venv': venv)`).
 4. Open the integrated terminal inside VS Code (`` Ctrl + ` `` or **Terminal → New Terminal**).
 
-### 4. Launch the pipeline
+### 4. Launch the program
 From the VS Code integrated terminal, run:
 ```
 uv run marimo edit
@@ -129,6 +129,22 @@ uv run marimo edit
 
 - **Toggle App View:** When using `marimo edit`, press `Ctrl + .` (or click the preview icon in the bottom-right corner) to switch between code view and the clean UI dashboard.
 
+---
+
+## Update to latest version
+
+If you wish to update your local files to the latest GitHub release, run this command in your console:
+```
+git pull
+uv sync
+```
+
+If you modified the files locally, or if the previous command gives an error, run this command:
+```
+git fetch origin
+git reset --hard origin/main
+uv sync
+```
 ---
 
 ## Citation
