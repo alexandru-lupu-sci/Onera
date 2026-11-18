@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use Onera in your research, please cite it using the metadata below, along with MNE-Python and YASA."
-title: "Onera: Interactive Sleep EEG Analysis Pipeline"
+title: "Onera: Interactive Sleep EEG Analysis Suite"
 type: software
 authors:
   - family-names: Lupu
@@ -8,10 +8,15 @@ authors:
     orcid: "https://orcid.org/0009-0005-3320-7467"
     affiliation: "University of Fribourg, Switzerland"
 abstract: >-
-  Onera is an interactive Python (Marimo) pipeline for sleep EEG and
-  polysomnography analysis. It characterizes brain activity in the minutes
-  preceding targeted awakenings (e.g., serial awakening and dream report
-  paradigms) and provides whole-night sleep architecture summaries.
+  Onera is an interactive Python (Marimo) suite for sleep EEG and
+  polysomnography (PSG) staging and analysis, combining two complementary
+  applications: Onera_SleepScorer.py for automated sleep staging with human-in-the-process through interactive hypnogram triage with pre-filtered waveform,
+  multi-electrode soft-voting consensus, 
+  inspection, and .Markers/.txt export; and Onera_PreAwakening.py for
+  whole-night sleep macro-architecture and targeted pre-awakening EEG analysis
+  including buffer-padded FIR filtering, automated artifact rejection, Welch
+  PSD bandpower, scalp topographies, power-domain STFT spectrograms, and master
+  CSV export.
 keywords:
   - sleep
   - EEG
@@ -21,6 +26,8 @@ keywords:
   - spectral analysis
   - hypnogram
   - spectrogram
+  - sleep scoring
+  - automated
 license: MIT
 repository-code: "https://github.com/alexandru-lupu-sci/Onera"
 version: "1.0.0"
