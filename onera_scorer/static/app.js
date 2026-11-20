@@ -70,10 +70,10 @@
     var tBtn = $("theme_toggle_btn");
     if (tBtn) {
       if (currentTheme === "light") {
-        tBtn.textContent = "🌙 Night";
+        tBtn.textContent = "🌑 Night";
         tBtn.title = "Theme: Light · Click for Night";
       } else if (currentTheme === "night") {
-        tBtn.textContent = "🌑 Dark";
+        tBtn.textContent = "🌙 Dark";
         tBtn.title = "Theme: Night · Click for Dark (OLED)";
       } else {
         tBtn.textContent = "☀️ Light";
