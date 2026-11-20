@@ -1,17 +1,19 @@
 [project]
 name = "onera"
 version = "1.0.0"
-description = "Interactive EEG pipeline for pre-awakening analysis"
+description = "Interactive EEG pipeline for sleep scoring and pre-awakening analysis"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.115.0",
     "marimo>=0.25.2",
     "matplotlib>=3.11.2",
     "mne>=1.13.2",
     "numpy>=2.4.6",
     "pandas>=3.1.1",
-    "plotly>=7.1.0",
+    "python-multipart>=0.0.20",
     "scipy>=1.17.1",
+    "uvicorn>=0.34.0",
     "yasa>=0.8.1",
 ]
 
