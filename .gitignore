@@ -1,0 +1,17 @@
+# Python & uv virtual environment
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Onera local sessions, generated demo data & local AI notes
+.onera_sessions/
+demo_data/
+GEMINI.md
+
+# OS & editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
