@@ -1,63 +1,50 @@
 # Onera: Interactive Sleep EEG Analysis Suite
 
-**Onera** is an interactive Python suite for sleep EEG and polysomnography (PSG) staging and analysis, built with [Marimo](https://marimo.io/). It combines two complementary reactive applications covering the full workflow from automated whole-night sleep scoring to targeted pre-awakening brain-state analysis:
+**Onera** is an interactive Python suite for sleep EEG and polysomnography (PSG) staging and analysis. It combines a standalone local web application (`FastAPI` + HTML5 Canvas) for sleep scoring and a [Marimo](https://marimo.io/) dashboard for targeted pre-awakening brain-state analysis:
 
-- **`Onera_SleepScorer.py`** — Automated $200\text{ Hz}$ whole-night sleep staging, multi-electrode soft-voting consensus, protocol-based Wake interval overrides, interactive hypnogram triage with $<1\text{ ms}$ pre-filtered waveform inspection, and `.Markers`/`.txt` export.
-- **`Onera_PreAwakening.py`** — Whole-night sleep macro-architecture and targeted pre-awakening EEG analysis, including stage progression, $\pm 20\text{ s}$ buffer-padded FIR filtering, automated artifact rejection, Welch PSD bandpower, whole-window/time-resolved/pre-vs-post-stimulus scalp topomaps, power-domain STFT spectrograms, and master `.csv` export.
+- **`Onera_SleepScorer.py`** — Standalone whole-night automated (YASA), manual, and two-scorer consensus sleep staging across major EEG/PSG formats (`.vhdr`, `.edf`, `.bdf`, `.fif`, `.set`, `.gdf`), featuring persistent zero-flash canvases, native Full-Screen mode, Light / Night / Dark (OLED) themes, tile-cached native-rate waveforms, session resuming, and multi-format export.
+- **`Onera_PreAwakening.py`** — Whole-night sleep macro-architecture and targeted pre-awakening EEG analysis with recursive recording discovery and a searchable **Recording** selector, $\pm 20\text{ s}$ buffer-padded composite FIR filtering with in-memory caching, automated artifact rejection, multi-threaded Welch PSD bandpower, whole-window/time-resolved/pre-vs-post-stimulus scalp topomaps, power-domain STFT spectrograms, and master `.csv` export.
+
+> **Looking for signal-processing parameters, scoring consensus math, or file-format schemas?** See [`METHODOLOGY.md`](METHODOLOGY.md) for the complete technical reference.
 
 ---
 
-## 1. `Onera_SleepScorer.py` — Automated Sleep Staging & Interactive Triage
+## 1. `Onera_SleepScorer.py` — Automated, Manual & Consensus Sleep Staging
 
-### Core Features & Methodology
+### Overview
 
-- **Automated $200\text{ Hz}$ YASA Staging & Re-Referencing:** Loads BrainVision triplets (`.vhdr`, `.vmrk`, `.eeg`), automatically classifies physiological channels (`EEG`, `EOG`, `EMG`, `ECG`, `Misc`), applies optional mastoid/custom EEG re-referencing, and resamples once to $200\text{ Hz}$ before running YASA's pre-trained LightGBM classifiers on $30\text{-s}$ epochs (prioritizing submental/chin EMG over ocular or facial EMG derivations).
-- **Multi-Electrode Soft-Voting Consensus:** Optionally scores across multiple EEG derivations (*Preset 1: Frontal-Central Quad `[F3, F4, C3, C4]`*, *Preset 2: Contralateral Pair `[F4, C3]`*, or *Custom EEG Channels*) and averages stage probability distributions across passes (soft voting) to determine each epoch's consensus sleep stage, confidence ($\%$), inter-electrode agreement ($\%$), and top-2 probability margin ($\Delta\%$).
-- **Wake Interval Overrides:** Forces epochs whose midpoint precedes a configurable `LightsOff` anchor marker or falls within matched Start/Stop ignore marker pairs (e.g., `Start_DreamReport` $\rightarrow$ `Stop_DreamReport`) to Wake (`W`), with an option to exclude forced-Wake epochs from low-confidence flags.
-- **Interactive Hypnogram Triage:** Flags epochs below a configurable confidence threshold (default $60\%$) with diagnostic tags (low agreement $<80\%$, stage transitions, narrow margin $<15\%$, N1 uncertainty). Supports horizontal scroll-zoom and pan, multi-epoch selection via individual clicks or box/lasso selection, a `Show All Epochs` toggle to inspect or edit any YASA-scored epoch alongside flagged epochs, and instant stage assignment (`W`, `N1`, `N2`, `N3`, `S4`, `REM`, `ART`) that immediately turns edited epochs green and auto-unselects them.
-- **Pre-Filtered Waveform & Probability Inspector:** Pre-filters all active scoring EEG channels plus EOG ($0.3\text{–}35\text{ Hz}$) and EMG ($10\text{–}70\text{ Hz}$) once across the night and caches a $200\text{ Hz}$ `float32` $\mu\text{V}$ array for $<1\text{ ms}$ epoch slicing (displaying $\pm 37.5\text{ }\mu\text{V}$ slow-wave reference lines on EEG channels) alongside per-stage ensemble probability bar charts.
-- **Export Formats:** Exports scored hypnograms as BrainVision `.Markers` files (in **AASM** or **R&K** notation, optionally retaining original `.vmrk` events) or 2-column numeric `.txt` files (`W=0, N1=1, N2=2, N3=3, S4=4/3, REM=5`).
+- **Standalone Persistent Web Workspace:** Runs locally via `FastAPI` + `Uvicorn` with zero-flash persistent canvases, native Full-Screen mode (`⛶`), cross-OS Windows/macOS/Linux support, and **Light / Night / Dark (OLED)** themes.
+- **Multi-Format EEG/PSG Loading:** Opens BrainVision (`.vhdr`), EDF/EDF+ (`.edf`), BioSemi (`.bdf`), MNE FIF (`.fif`, `.fif.gz`), EEGLAB (`.set`), and GDF (`.gdf`) recordings directly, automatically loading `.vmrk`, embedded annotations, or BIDS `*_events.tsv` events.
+- **Automated & Manual Scoring:** Runs automated 30-second sleep staging with YASA (single-channel or multi-electrode consensus) or lets you score recordings manually at their native sampling rate.
+- **Two-Scorer Consensus Mode:** Compares two scoring files epoch-by-epoch (even with identical filenames from separate folders), auto-validates union `+MA` tags with optional `+MA` difference flagging, displays Agreement % & Cohen's $\kappa$, overlays Scorer 2's differing segments on the hypnogram, offers one-click Scorer 1 / Scorer 2 adjudication plus optional YASA 3rd opinion & confidence tie-breaking, and warns on export when unresolved conflicts default to Scorer 1.
+- **Wake Overrides & Event Markers:** Automatically marks pre-`LightsOff` segments and custom start/stop intervals (e.g., dream report windows) as Wake, while displaying recording events on both the hypnogram and waveforms.
+- **Fast Interactive Hypnogram & Shortcuts:** Smooth zoom, trackpad/wheel pan, click, and box-selection across the night, paired with stage buttons (`W`, `N1`, `N2`, `N3`, `S4`, `REM`, `ART`), toggleable micro-arousals (`+MA`), undo (`Ctrl`/`Cmd`+`Z`), auto-advance, `Ctrl`/`Cmd`+Click multi-select, and single-key shortcuts (`0`–`3`, `5`, `F`, `G`, `X`, `←`/`→`).
+- **Tile-Cached Binary Waveform Viewer:** Streams compact Int16 waveforms on demand with offscreen epoch tile caching for smooth 60 FPS scrolling/panning (`30s`/`60s`, 1- or 2-column, amplitude scaling, dynamic channel add/reorder), alongside YASA stage probabilities and scorer consensus controls.
+- **Session Resuming & 6 Export Formats:** Resumes unfinished sessions with saved edits and `+MA` tags restored, and exports scored hypnograms in **AASM** or **R&K** notation to `.Markers`, `.txt`, BIDS `*_events.tsv`, MNE `*_annotations.csv`, Rich `*_hypnogram.csv`, or `.vmrk`.
 
 ---
 
 ## 2. `Onera_PreAwakening.py` — Pre-Awakening & Whole-Night EEG Analysis
 
-### Core Features
+### Core Features & Methodology
 
-- **Whole-Night Hypnograms & Macro-Statistics:** Plots whole-night sleep architecture (supporting both **AASM** and **R&K** scoring) aligned to 24-hour clock time. Automatically computes standard clinical sleep metrics (Total Sleep Time, Sleep Efficiency, WASO, Sleep Onset Latency, and stage percentages) via `YASA`.
-- **Pre-Awakening Stage Progression:** Extracts the chronological sequence of sleep stages, the final sleep stage prior to awakening, the dominant stage, and the exact time elapsed between experimental triggers (e.g., auditory stimulation) and each awakening.
-- **Signal Pre-Processing:** Loads BrainVision files (`.vhdr`, `.vmrk`, `.eeg`), automatically classifies channel types (`EEG`, `EOG`, `EMG`, `ECG`, and `Misc` sensors such as Resp/SCR), allows manual exclusion of detached/noisy electrodes, re-references cortical channels, and applies FIR bandpass and notch filters with before/after PSD validation plots.
-- **Automated Artifact Rejection:** Epochs the pre-awakening window and removes segments containing flatlines, high peak-to-peak voltage excursions, fast voltage steps ($\mu\text{V/ms}$), or high-frequency EMG bursts. Reports per-channel artifact rates across EEG and EMG channels so faulty electrodes are easy to identify.
-- **Spectral Power (PSD):** Computes absolute ($\mu\text{V}^2$) and relative ($\%$) bandpower across clinical sleep bands (*SWA, Theta, Alpha, Slow Spindles, Fast Spindles, Beta*) or standard EEG bands (*Delta, Theta, Alpha, Beta, Gamma*) using Welch's method, with selectable **Mean** or **Median** (robust) aggregation across clean epochs.
-- **Whole-Window & Time-Resolved Scalp Topomaps:**
-  - *Whole-Window Topography:* Displays 2D scalp maps averaged across the full pre-awakening window.
-  - *Interactive Time-Resolved Topography:* Provides a sliding time window ($15\text{ s}$ to $240\text{ s}$) with a synchronized timeline showing sleep stages, experimental markers, and rejected artifact epochs. Supports both fixed colorbar scaling (to track amplitude changes over time) and dynamic scaling (to maximize spatial contrast at a specific moment).
-  - *Split-Screen Pre- vs. Post-Stimulus Comparison:* Automatically locks onto the most recent experimental stimulus trigger to compare Baseline vs. Stimulation topographies side-by-side (excluding epochs straddling stimulus onset), supporting both global fixed scaling and pair-locked dynamic scaling.
-- **Time-Frequency Spectrograms:** Computes multi-channel Short-Time Fourier Transform (STFT) spectrograms with external marker labels and artifact indicators.
-- **Session Master Export:** Combines pre-awakening sleep stage metadata and channel-level spectral power across all awakenings in a recording into a single table for `.csv` export.
-
-### Signal Processing Methodology
-
-- **Channel-Specific Filtering:** Cortical EEG and EOG channels are bandpass-filtered to isolate cerebral activity (default $0.3\text{–}45\text{ Hz}$). EMG channels are filtered separately across the muscle passband ($10\text{–}90\text{ Hz}$) so that slow respiratory or sweat artifacts do not trigger false EMG rejections.
-- **Edge-Artifact Prevention:** Before filtering each pre-awakening segment, Onera extracts an extra $\pm 20\text{ s}$ buffer of continuous raw signal on both sides of the window. After FIR bandpass and notch filtering (including harmonics below Nyquist), the $20\text{ s}$ buffers are cropped away so that filter edge ringing never enters the analysis window.
-- **Standardized Welch Estimation:** Spectral power is estimated on clean epochs using a 4-second Hamming window ($0.25\text{ Hz}$ frequency resolution). When relative power ($\%$) is selected in the Clinical Sleep preset, each band is divided by the total broadband power ($0.5\text{–}25\text{ Hz}$); note that because *Alpha* ($8\text{–}12\text{ Hz}$) and *Slow Spindles* ($11\text{–}13\text{ Hz}$) share the $11\text{–}12\text{ Hz}$ bin, row sums across all clinical bands can slightly exceed $100\%$.
-- **Power-Domain Spectrogram Averaging:** When multiple channels are selected for the spectrogram, the STFT power matrix is computed for each channel individually before averaging across channels and converting to decibels ($\text{dB}$). This avoids the phase cancellation that occurs when averaging raw time-domain signals across electrodes.
+- **Flexible Recording Discovery & Whole-Night Macro-Statistics:** Recursively discovers `.Markers`/`.vmrk` and raw BrainVision `.vhdr` files across arbitrary filenames and folder structures (flat, per-participant, or BIDS) in a single searchable **Recording** dropdown, automatically pairing markers with raw EEG, aligning whole-night **AASM** or **R&K** hypnograms to 24-hour clock time, computing clinical sleep metrics via `YASA`, and extracting pre-awakening stage sequences and trigger latencies.
+- **Fast Buffer-Padded Composite FIR Pre-Processing:** Classifies channels (`EEG`, `EOG`, `EMG`, `ECG`, `Misc`), supports bad-channel exclusion and direct EEG re-referencing, caches buffered ($\pm 20\text{ s}$) raw awakening windows in RAM so filter adjustments skip disk I/O, and applies precomputed composite zero-phase FIR bandpass ($0.3\text{–}45\text{ Hz}$ EEG/EOG; $10\text{–}90\text{ Hz}$ EMG) + harmonic notch kernels via multi-threaded overlap-add FFT convolution, verified with before/after PSD plots.
+- **Instant Threshold-Driven Artifact Rejection:** Precomputes per-epoch metrics and multi-threaded Welch PSDs once per awakening so adjusting flatline, peak-to-peak amplitude, fast voltage step ($\mu\text{V/ms}$), or chin EMG burst sliders updates diagnostics, retention rates, and top artifact-triggering channels instantaneously without re-running FFTs.
+- **Standardized Welch Bandpower (PSD):** Reuses precomputed clean-epoch Welch PSDs ($4\text{-s}$ Hamming window, $0.25\text{ Hz}$ resolution) for instant switching across **Mean/Median** aggregation, **Absolute ($\mu\text{V}^2$)/Relative ($\%$)** metrics, and Clinical Sleep (*SWA, Theta, Alpha, Slow/Fast Spindles, Beta*) or Standard EEG (*Delta–Gamma*) presets.
+- **Scalp Topomaps & Power-Domain STFT Spectrograms:** Generates whole-window scalp maps, smooth interactive $15\text{–}240\text{ s}$ sliding-window topographies (with precomputed Fixed Scale limits and pre-filtered timeline overlays), and split-screen pre- vs. post-stimulus maps; computes multi-channel STFT spectrograms in parallel and averages in the linear power domain before $\text{dB}$ conversion.
+- **Fast Session Master Export:** Consolidates pre-awakening sleep stage metadata and channel-level clean spectral bandpower across all awakenings in a recording into a single `.csv` table.
 
 ---
 
 ## Expected File Structure
 
-Onera scans two local directories: one for raw BrainVision recordings (`.vhdr`, `.vmrk`, `.eeg`) and one for scored marker files (`.Markers` or `.vmrk`). Files should follow this naming convention:
+Both applications work with **any filename or folder layout** (flat directories, per-participant subfolders, spaces, dates, hyphens, or BIDS hierarchies) and present recordings in a single searchable **Recording** dropdown:
 
-```text
-Participant_Condition_OptionalID(.vhdr / .eeg / .vmrk / .Markers)
-```
+- **`Onera_SleepScorer.py`:** Recursively scans your raw data folder for `.vhdr`, `.edf`, `.bdf`, `.fif`, `.fif.gz`, `.set`, and `.gdf` files (skipping hidden folders and companion files), automatically detecting `.vmrk`, embedded annotations, or BIDS `*_events.tsv` markers.
+- **`Onera_PreAwakening.py`:** Recursively scans your raw BrainVision folder (`.vhdr`, `.vmrk`, `.eeg`) and markers folder (`.Markers` or `.vmrk`, which may be the same or separate folders) and automatically pairs each scored marker file with its matching raw `.vhdr` recording (exact relative path & stem first, followed by unique stem, separator-delimited prefix, and legacy `Participant_Condition_*` fallback).
 
-- **`Participant`**: Participant code (e.g., `DS01`, `DM02`)
-- **`Condition`**: Night or experimental condition (e.g., `1`, `adapt`, `Exp`)
-- **`OptionalID`**: Session timestamp or identifier *(optional)*
-
-*Note: Onera automatically detects the marker sampling rate from the `.Markers` or `.vhdr` header, even if the markers were exported at a downsampled rate in BrainVision Analyzer.*
+*Note: Onera automatically detects marker/header sampling rates per active recording from `.vhdr`, `.Markers`, `.vmrk`, or embedded recording headers, even when marker files were exported at a different rate than the raw PSG.*
 
 ---
 
@@ -117,12 +104,28 @@ uv sync
 3. **Select the Python interpreter in VS Code:** Open the Command Palette (`Ctrl + Shift + P`), type and select **`Python: Select Interpreter`**, and choose the project's virtual environment interpreter (`.\.venv\Scripts\python.exe` on Windows or `./.venv/bin/python` on macOS/Linux, typically listed as `('.venv': venv)`).
 4. Open the integrated terminal inside VS Code (`` Ctrl + ` `` or **Terminal → New Terminal**).
 
+Note: You might be in Restricted Mode (bottom left corner). If you are, click it and select Trust.
+
 ### 4. Launch the program
-From the VS Code integrated terminal, run:
+From the VS Code integrated terminal, run either application:
+
+**Sleep Scorer (Standalone Web App):**
+```bash
+uv run python Onera_SleepScorer.py
 ```
-uv run marimo edit
+
+**Pre-Awakening Analysis (Marimo App):**
+```bash
+uv run marimo edit Onera_PreAwakening.py
 ```
-- A browser window will open. Select the program you want (`Onera_SleepScorer.py` or `Onera_PreAwakening.py`).
+
+### 5. Optional: Generate Synthetic Demo Data
+To test either app immediately without your own EEG recordings, generate a synthetic 12-channel BrainVision dataset locally (`demo_data/`, ~26 MB):
+```bash
+uv run python generate_demo_data.py
+```
+- Generates a 60-minute flat recording (`Demo01_Baseline_Night`) and a 30-minute nested BIDS recording (`sub-02/ses-01/...`, paired with a `LightsOff`-cropped `.Markers` file) covering `W`, `N1`, `N2`, `N3`, `REM`, `+MA` tags, `50 Hz` line noise, mastoid drift, and awakening/stimulus triggers (use `--recordings 1`, `--sfreq`, `--seed`, or `--out <folder>` to customize).
+- In **`Onera_SleepScorer.py`**, set **Raw EEG / PSG Folder** to `demo_data`; in **`Onera_PreAwakening.py`**, set both **Raw Data Path** and **Markers Path** to `demo_data`.
 
 ---
 ## Usage Tips
