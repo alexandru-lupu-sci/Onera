@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Onera SleepScorer</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Centered Hero Header -->
+    <header id="app_header" class="onera-card app-header">
+      <div class="header-top-grid">
+        <div class="header-spacer" aria-hidden="true"></div>
+        <div class="header-brand">
+          <h1 class="app-title">Onera SleepScorer</h1>
+          <div class="app-byline">
+            Alexandru Lupu ·
+            <a href="https://github.com/alexandru-lupu-sci" target="_blank" rel="noopener">github.com/alexandru-lupu-sci</a>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button type="button" id="toggle_about_btn" class="btn">About</button>
+          <button type="button" id="theme_toggle_btn" class="btn" title="Switch Light / Night / Dark (OLED) theme">🌙 Night</button>
+        </div>
+      </div>
+      <ul id="header_features" class="feature-list hidden">
+        <li><strong>Universal EEG/PSG Support:</strong> Reads BrainVision (<code>.vhdr</code>), EDF/EDF+ (<code>.edf</code>), BioSemi (<code>.bdf</code>), MNE FIF (<code>.fif</code>), EEGLAB (<code>.set</code>), and GDF (<code>.gdf</code>) via chunked streaming with single-session caching, automatically extracting <code>.vmrk</code>, embedded MNE annotations, or BIDS <code>*_events.tsv</code> markers.</li>
+        <li><strong>Automated &amp; Manual Sleep Staging:</strong> Automated mode scores 30-second epochs at 100 Hz with YASA's pre-trained LightGBM classifiers while keeping all display waveforms at the recording's native sampling rate; Manual mode bypasses YASA directly.</li>
+        <li><strong>Two-Scorer Consensus Mode:</strong> Compares two scorers epoch-by-epoch, auto-validates union <code>+MA</code> tags, reports Agreement % &amp; Cohen's Kappa, and optionally adds YASA as a 3rd opinion or confidence tie-breaker.</li>
+        <li><strong>Wake Interval Overrides:</strong> Forces epochs before <code>LightsOff</code> and between matched Start/Stop ignore marker pairs to Wake (<code>W</code>).</li>
+        <li><strong>Interactive Canvas Triage &amp; Multi-Format Export:</strong> Zoom, pan, click, or box-select epochs directly on the hypnogram for crisp native-rate waveform inspection, stage / <code>+MA</code> edits, session resuming, and export to <code>.Markers</code>, <code>.txt</code>, BIDS <code>*_events.tsv</code>, MNE <code>*_annotations.csv</code>, Rich <code>*_hypnogram.csv</code>, or <code>.vmrk</code>.</li>
+      </ul>
+    </header>
+
+    <!-- Section 1: Import -->
+    <section id="paths_section" class="onera-card section-card">
+      <div class="section-header">
+        <h2>Import</h2>
+      </div>
+
+      <div class="form-grid-paths">
+        <div class="field grow">
+          <label class="field-label" for="data_dir_input">📂 Raw EEG/PSG Data Path (.vhdr, .edf, .bdf, .fif, .set, .gdf):</label>
+          <input id="data_dir_input" type="text" class="text-input" value="" placeholder="/path/to/raw_eeg_data" />
+        </div>
+        <div class="field grow">
+          <label class="field-label" for="output_dir_input">📂 Output Directory for Scored Files:</label>
+          <input id="output_dir_input" type="text" class="text-input" value="" placeholder="/path/to/scored_outputs" />
+        </div>
+        <button type="button" id="scan_dirs_btn" class="btn btn-sky">Scan &amp; Load Directories</button>
+      </div>
+
+      <div id="scan_callout" class="onera-callout is-info">
+        👆 Verify your paths above and click <strong>Scan &amp; Load Directories</strong> to begin.
+      </div>
+
+      <div id="recording_selector_row" class="recording-selector-grid hidden">
+        <div class="field">
+          <span class="field-label">Recording:</span>
+          <div id="rec_combobox" class="onera-combobox"></div>
+        </div>
+        <div class="field">
+          <label class="field-label" for="fs_input">Sampling Rate (Hz):</label>
+          <input id="fs_input" type="number" class="text-input" min="50" max="10000" step="1" value="500" />
+        </div>
+      </div>
+
+      <div id="recording_meta_card" class="onera-summary-card hidden" style="padding:10px 14px;display:flex;flex-direction:column;gap:8px;">
+        <div id="recording_meta_pills" class="meta-pills-row"></div>
+        <div id="recording_marker_pills" class="meta-pills-row"></div>
+      </div>
+      <div id="session_err_callout" class="onera-callout is-warn hidden"></div>
+    </section>
+
+    <!-- Section 2: Configuration -->
+    <section id="config_section" class="onera-card section-card hidden">
+      <div class="section-header">
+        <h2>Configuration</h2>
+        <button type="button" id="toggle_config_btn" class="btn">▾ Collapse</button>
+      </div>
+
+      <div id="config_body" class="config-body">
+        <div class="group-title">Parameters</div>
+
+        <div class="config-params-grid">
+          <!-- Left Subcard: Wake Overrides & Ignore Intervals -->
+          <div class="config-subcard">
+            <div class="section-sub">Wake Overrides &amp; Ignore Intervals</div>
+            <div class="wake-top-row">
+              <div class="field" style="flex:1 1 auto;">
+                <label class="field-label" for="lightsoff_select">LightsOff Anchor Marker:</label>
+                <select id="lightsoff_select" class="select-input"></select>
+              </div>
+              <button type="button" id="add_ignore_pair_btn" class="btn">➕ Add Pair</button>
+              <button type="button" id="remove_ignore_pair_btn" class="btn">➖ Remove Pair</button>
+            </div>
+            <div id="ignore_pairs_wrap" class="ignore-pairs-wrap"></div>
+          </div>
+
+          <!-- Right Subcard: Channels, Referencing & Multi-Electrode Consensus -->
+          <div class="config-subcard">
+            <div class="section-sub">Channels &amp; Referencing</div>
+            <div class="channels-top-grid">
+              <div class="field">
+                <span class="field-label">EEG Reference Channels:</span>
+                <div id="ref_channels_ms" class="onera-multiselect"></div>
+              </div>
+              <div class="field">
+                <label class="field-label" for="primary_eeg_select">Primary EEG Channel:</label>
+                <select id="primary_eeg_select" class="select-input"></select>
+              </div>
+              <div class="field">
+                <label class="field-label" for="eog_select">EOG Channel (Optional):</label>
+                <select id="eog_select" class="select-input"></select>
+              </div>
+              <div class="field">
+                <label class="field-label" for="emg_select">EMG Channel (Optional):</label>
+                <select id="emg_select" class="select-input"></select>
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Additional Waveform Channels (Visual Only):</span>
+              <div id="visual_channels_ms" class="onera-multiselect"></div>
+            </div>
+
+            <hr class="soft-hr-dashed" />
+            <div class="section-sub">Multi-Electrode Consensus</div>
+            <div class="consensus-grid">
+              <label class="check-label">
+                <input type="checkbox" id="multi_electrode_chk" />
+                🧠 Enable Consensus
+              </label>
+              <div class="field">
+                <label class="field-label" for="preset_select">Multi-Electrode Preset:</label>
+                <select id="preset_select" class="select-input">
+                  <option value="Preset 1: Frontal-Central Quad [F3, F4, C3, C4] (Recommended)">Preset 1: Frontal-Central Quad [F3, F4, C3, C4] (Recommended)</option>
+                  <option value="Preset 2: Contralateral Pair [F4, C3]">Preset 2: Contralateral Pair [F4, C3]</option>
+                  <option value="Custom EEG Channels">Custom EEG Channels</option>
+                </select>
+              </div>
+              <div class="field">
+                <span class="field-label">Custom EEG Channels:</span>
+                <div id="custom_eeg_ms" class="onera-multiselect"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="group-title">Start Analysis</div>
+
+        <div class="config-start-grid">
+          <!-- Mode Card 1: Automated Scoring -->
+          <div class="mode-card">
+            <div class="mode-card-body">
+              <div class="section-sub">Automated Scoring (YASA)</div>
+              <div class="field">
+                <label class="field-label" for="confidence_slider">🎚️ Confidence Threshold (%):</label>
+                <div class="slider-wrap">
+                  <input id="confidence_slider" type="range" min="30" max="99" step="1" value="60" />
+                  <span id="confidence_val" class="slider-val">60%</span>
+                </div>
+              </div>
+              <label class="check-label">
+                <input type="checkbox" id="exclude_forced_wake_chk" checked />
+                Exclude forced Wake overrides from flags
+              </label>
+            </div>
+            <button type="button" id="run_auto_btn" class="btn btn-sage mode-action-btn">▶ Run Automated Sleep Scoring</button>
+          </div>
+
+          <!-- Mode Card 2: Manual Scoring -->
+          <div class="mode-card">
+            <div class="mode-card-body">
+              <div class="section-sub">Manual Scoring</div>
+              <div class="field">
+                <span class="field-label">✍️ Manual Display Channels:</span>
+                <div id="manual_channels_ms" class="onera-multiselect"></div>
+              </div>
+            </div>
+            <button type="button" id="start_manual_btn" class="btn btn-sage mode-action-btn">✍️ Start Manual Sleep Scoring</button>
+          </div>
+
+          <!-- Mode Card 3: Resume Saved Session -->
+          <div class="mode-card">
+            <div class="mode-card-body">
+              <div class="section-sub">Resume Saved Session</div>
+              <div class="resume-picker-row">
+                <label class="btn btn-sky" style="margin:0;">
+                  📂 Select Saved Scoring (.Markers/.txt/.tsv/.csv/.vmrk/.json)
+                  <input id="resume_file_input" type="file" accept=".Markers,.markers,.txt,.tsv,.csv,.vmrk,.json" style="display:none;" />
+                </label>
+                <span id="resume_file_name" class="resume-file-name">No file selected</span>
+              </div>
+              <label class="check-label">
+                <input type="checkbox" id="resume_yasa_chk" />
+                Overlay onto YASA probabilities (Automated mode)
+              </label>
+            </div>
+            <button type="button" id="resume_btn" class="btn btn-sage mode-action-btn">📂 Resume Saved Scoring</button>
+          </div>
+        </div>
+
+        <!-- Mode Card 4: Two-Scorer Consensus Mode -->
+        <div class="consensus-mode-card">
+          <div class="consensus-mode-header">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div class="section-sub" style="margin:0;">Two-Scorer Consensus Mode</div>
+              <span class="consensus-badge">Inter-Rater Adjudication</span>
+            </div>
+            <span class="muted-note">Union <code>+MA</code> auto-kept · Identical filenames in separate folders supported</span>
+          </div>
+
+          <div class="consensus-mode-grid">
+            <div class="consensus-scorer-slot">
+              <div class="consensus-slot-head">
+                <label class="btn btn-sky" style="margin:0;">
+                  📄 Scorer 1 File
+                  <input id="cons_s1_file_input" type="file" accept=".Markers,.markers,.txt,.tsv,.csv,.vmrk,.json" style="display:none;" />
+                </label>
+                <span id="cons_s1_file_name" class="resume-file-name">No file selected</span>
+              </div>
+              <div class="field">
+                <label class="field-label" for="cons_s1_label_input">Short Label (Scorer 1 / defaults for unresolved):</label>
+                <input id="cons_s1_label_input" type="text" class="text-input" value="" placeholder="Scorer 1" maxlength="32" />
+              </div>
+            </div>
+
+            <div class="consensus-scorer-slot">
+              <div class="consensus-slot-head">
+                <label class="btn btn-sky" style="margin:0;">
+                  📄 Scorer 2 File
+                  <input id="cons_s2_file_input" type="file" accept=".Markers,.markers,.txt,.tsv,.csv,.vmrk,.json" style="display:none;" />
+                </label>
+                <span id="cons_s2_file_name" class="resume-file-name">No file selected</span>
+              </div>
+              <div class="field">
+                <label class="field-label" for="cons_s2_label_input">Short Label (Scorer 2):</label>
+                <input id="cons_s2_label_input" type="text" class="text-input" value="" placeholder="Scorer 2" maxlength="32" />
+              </div>
+            </div>
+
+            <div class="consensus-options-col">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label class="check-label">
+                  <input type="checkbox" id="cons_flag_ma_chk" />
+                  Flag <code>+MA</code> differences (stage agrees, +MA differs)
+                </label>
+                <label class="check-label">
+                  <input type="checkbox" id="cons_with_yasa_chk" />
+                  Run YASA as 3rd opinion (show probabilities in sidebar)
+                </label>
+                <label class="check-label">
+                  <input type="checkbox" id="cons_auto_resolve_chk" disabled />
+                  Auto-resolve ties with YASA (≥ Confidence Threshold)
+                </label>
+              </div>
+              <button type="button" id="run_consensus_btn" class="btn btn-sage mode-action-btn">⚖️ Run Consensus Comparison</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Progress & Status Callout -->
+    <section id="progress_section" class="hidden" style="display:flex;flex-direction:column;gap:8px;">
+      <div id="progress_card" class="onera-card section-card hidden" style="padding:10px 14px;gap:6px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:700;">
+          <span id="progress_title">Running Automated Sleep Scoring</span>
+          <span id="progress_pct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div id="progress_fill" class="progress-fill"></div>
+        </div>
+        <div id="progress_subtitle" style="font-size:12px;color:var(--onera-muted);">Initializing...</div>
+      </div>
+      <div id="scoring_error_callout" class="onera-callout is-danger hidden"></div>
+    </section>
+
+    <!-- Section 3: Sleep Scoring (Persistent Workspace — Never Torn Down) -->
+    <section id="workspace_section" class="onera-card section-card workspace-section hidden">
+      <div class="section-header workspace-section-header">
+        <h2>Sleep Scoring</h2>
+      </div>
+
+      <div id="workspace_toolbar" class="onera-card onera-tb-wrap">
+        <div class="toolbar-row">
+          <button type="button" id="btn_prev_flag" class="btn btn-sky">⏮️ Prev Flag</button>
+          <button type="button" id="btn_next_flag" class="btn btn-sky">⏭️ Next Flag</button>
+          <button type="button" id="btn_prev_ep" class="btn">◀ Prev Ep</button>
+          <button type="button" id="btn_next_ep" class="btn">▶ Next Ep</button>
+          <button type="button" id="btn_unselect" class="btn" title="Unselect selected epochs (Key: X)">✖ Unselect</button>
+
+          <span class="onera-tb-sep">|</span>
+          <span class="onera-tb-lbl">Set Stage:</span>
+
+          <button type="button" id="btn_stage_w" class="btn" data-stage="W">W</button>
+          <button type="button" id="btn_stage_n1" class="btn" data-stage="N1">N1</button>
+          <button type="button" id="btn_stage_n2" class="btn" data-stage="N2">N2</button>
+          <button type="button" id="btn_stage_n3" class="btn" data-stage="N3">N3</button>
+          <button type="button" id="btn_stage_s4" class="btn" data-stage="S4">S4</button>
+          <button type="button" id="btn_stage_rem" class="btn" data-stage="REM">REM</button>
+          <button type="button" id="btn_stage_art" class="btn btn-coral" data-stage="ART">ART</button>
+          <button type="button" id="btn_toggle_ma" class="btn">+ MA</button>
+
+          <button type="button" id="btn_revert" class="btn">↩️ Revert</button>
+          <button type="button" id="btn_clear_all" class="btn btn-coral">🗑️ Clear All</button>
+
+          <span class="onera-tb-sep">|</span>
+
+          <label id="lbl_show_all_wrap" class="check-label" style="min-height:auto;font-size:12px;">
+            <input type="checkbox" id="chk_show_all" />
+            Show All Epochs
+          </label>
+          <label class="check-label" style="min-height:auto;font-size:12px;">
+            <input type="checkbox" id="chk_auto_advance" checked />
+            ⏭️ Auto-Advance
+          </label>
+
+          <span class="onera-tb-sep">|</span>
+
+          <button type="button" id="onera_keys_btn" class="onera-ctrl-btn is-standalone onera-fs-only" title="Shortcuts: 0=W · 1=N1 · 2=N2 · 3=N3 · 5=REM · F=ART · G=+MA · X=Unselect · ←/→=Epoch · Multi-select: Hold Ctrl (Cmd on macOS) + Click · Shift + Drag">⌨ Keys</button>
+          <button type="button" id="onera_fs_btn" class="onera-ctrl-btn is-standalone fs-toggle-btn" title="Toggle Full-Screen Scoring Workspace (Esc to exit)">⛶ Full Screen</button>
+        </div>
+        <div id="shortcuts_bar" class="shortcuts-bar">
+          <b>Shortcuts:</b> <code>0</code>=W · <code>1</code>=N1 · <code>2</code>=N2 · <code>3</code>=N3 · <code>5</code>=REM · <code>F</code>=ART · <code>G</code>=+MA · <code>X</code>=Unselect · <code>←</code>/<code>→</code>=Epoch · <b>Multi-Select:</b> Hold <code>Ctrl</code> (<code>Cmd</code> on macOS) + Click · <code>Shift</code> + Drag
+        </div>
+      </div>
+
+      <!-- Hypnogram Card -->
+      <div id="hypno_card" class="onera-card hypno-card">
+        <div class="onera-hyp-head">
+          <div class="hypno-title-group">
+            <span id="hypno_title" class="hypno-title">Interactive Hypnogram</span>
+            <span id="hypno_legend" class="hypno-legend"></span>
+          </div>
+          <div class="hypno-controls">
+            <button type="button" id="onera_hyp_tog_conf" class="onera-ctrl-btn is-pill">Confidence %</button>
+            <button type="button" id="onera_hyp_tog_lbl" class="onera-ctrl-btn is-pill is-active">Epoch #</button>
+            <button type="button" id="onera_hyp_tog_ev" class="onera-ctrl-btn is-pill is-active-lavender" title="Toggle recording event lines &amp; markers">Events</button>
+            <div class="onera-ctrl-grp">
+              <button type="button" id="onera_hyp_mode_pan" class="onera-ctrl-btn is-active">Pan</button>
+              <button type="button" id="onera_hyp_mode_box" class="onera-ctrl-btn" title="Box Select (or Shift+Drag; Ctrl/Cmd+Click to multi-select)">Box Select</button>
+            </div>
+            <button type="button" id="onera_hyp_reset" class="onera-ctrl-btn is-standalone" title="Reset zoom to full night (or double-click canvas)">Full Night</button>
+          </div>
+        </div>
+        <div id="onera_hypno_wrap">
+          <canvas id="onera_hypno_canvas"></canvas>
+          <div id="onera_hypno_tip"></div>
+        </div>
+      </div>
+
+      <!-- Waveform + Probability Inspector Card -->
+      <div id="inspector_card" class="onera-card inspector-card" data-onera-mode="auto">
+        <div class="wave-col">
+          <div class="wave-header">
+            <select id="onera_add_ch_select" class="onera-ctrl-sel" title="Add a recording channel visually (does not re-run scoring)" style="max-width:142px;">
+              <option value="">+ Channel</option>
+            </select>
+            <div id="onera_wave_title" class="wave-title">30s Pre-Filtered Waveforms</div>
+            <div class="wave-controls">
+              <select id="onera_amp_scale" class="onera-ctrl-sel" title="Amplitude scale for EEG/EOG traces (EMG/ECG/misc stay auto-scaled)">
+                <option value="0">Amp: Auto</option>
+                <option value="35">±35 µV</option>
+                <option value="50">±50 µV</option>
+                <option value="75">±75 µV</option>
+                <option value="100">±100 µV</option>
+                <option value="150">±150 µV</option>
+                <option value="200">±200 µV</option>
+              </select>
+              <div class="onera-ctrl-grp">
+                <button type="button" id="onera_win_30" class="onera-ctrl-btn is-active">30s</button>
+                <button type="button" id="onera_win_60" class="onera-ctrl-btn">60s</button>
+              </div>
+              <div class="onera-ctrl-grp">
+                <button type="button" id="onera_cols_1" class="onera-ctrl-btn is-active">1 Col</button>
+                <button type="button" id="onera_cols_2" class="onera-ctrl-btn">2 Col</button>
+              </div>
+            </div>
+          </div>
+          <div id="onera_wave_wrap">
+            <canvas id="onera_wave_canvas" title="Drag horizontally to pan · Drag left grip to reorder channels"></canvas>
+          </div>
+        </div>
+
+        <!-- YASA & Consensus Sidebar -->
+        <aside id="prob_panel" class="onera-prob-sidebar">
+          <div class="onera-prob-head">
+            <span id="prob_ep_num" style="font-weight:700;font-size:11.5px;">Ep #1</span>
+            <span id="prob_cue_badge" style="padding:1px 6px;border-radius:999px;font-size:9.8px;font-weight:700;border:1px solid var(--onera-border);white-space:nowrap;">—</span>
+          </div>
+          <div id="consensus_sidebar_block" class="consensus-sidebar-block hidden">
+            <div class="cons-scorer-row">
+              <button type="button" id="cons_accept_s1_btn" class="cons-accept-btn" title="Accept Scorer 1 stage for selected epoch(s)">
+                <span id="cons_s1_btn_lbl" class="cons-accept-lbl">Scorer 1</span>
+                <span id="cons_s1_btn_stage" class="cons-accept-stage">—</span>
+              </button>
+              <button type="button" id="cons_accept_s2_btn" class="cons-accept-btn" title="Accept Scorer 2 stage for selected epoch(s)">
+                <span id="cons_s2_btn_lbl" class="cons-accept-lbl">Scorer 2</span>
+                <span id="cons_s2_btn_stage" class="cons-accept-stage">—</span>
+              </button>
+            </div>
+            <div id="cons_irr_box" class="cons-irr-box"></div>
+          </div>
+          <div id="yasa_sidebar_block" class="yasa-sidebar-block">
+            <div id="prob_votes" class="onera-prob-votes">Votes: —</div>
+            <div id="prob_bars" class="onera-prob-bars"></div>
+            <div class="onera-prob-foot">
+              <span style="display:inline-block;width:10px;border-top:1.5px dashed var(--onera-coral-dot);"></span>
+              <span id="prob_thresh_lbl">Thresh 60%</span>
+            </div>
+          </div>
+          <div id="prob_summary_fs" class="onera-prob-summary"></div>
+        </aside>
+      </div>
+
+      <!-- Summary Bar -->
+      <div id="summary_bar" class="onera-summary-card summary-bar" data-onera-mode="auto">
+        <div id="summary_row_global" class="onera-sum-row onera-sum-row-global"></div>
+        <div id="summary_row_epoch" class="onera-sum-row onera-sum-row-epoch"></div>
+      </div>
+    </section>
+
+    <!-- Section 4: Export -->
+    <section id="export_section" class="onera-card section-card hidden">
+      <div class="section-header">
+        <h2>Export</h2>
+      </div>
+      <div class="form-row">
+        <div class="field" style="min-width:260px;">
+          <label class="field-label" for="export_format_select">📄 Export Format:</label>
+          <select id="export_format_select" class="select-input">
+            <option value="markers">BrainVision .Markers (Analyzer CSV)</option>
+            <option value="txt">2-Column Numeric .txt (Stage + MA)</option>
+            <option value="bids_tsv">BIDS Events (*_events.tsv)</option>
+            <option value="mne_csv">MNE Annotations (*_annotations.csv)</option>
+            <option value="rich_csv">Rich Hypnogram Table (*_hypnogram.csv)</option>
+            <option value="vmrk">BrainVision .vmrk (Standard INI)</option>
+          </select>
+        </div>
+        <div class="field grow">
+          <label class="field-label" for="export_dir_input">📂 Output Directory:</label>
+          <input id="export_dir_input" type="text" class="text-input" />
+        </div>
+        <div class="field grow">
+          <label id="export_filename_lbl" class="field-label" for="export_filename_input">📄 Output Filename (.Markers):</label>
+          <input id="export_filename_input" type="text" class="text-input" />
+        </div>
+      </div>
+
+      <div class="form-row" style="align-items:center;">
+        <div style="display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <span class="field-label">🏷️ Stage Notation:</span>
+          <label class="check-label">
+            <input type="radio" name="notation_radio" value="AASM" checked />
+            AASM (W, N1, N2, N3, REM)
+          </label>
+          <label class="check-label">
+            <input type="radio" name="notation_radio" value="RK" />
+            R&amp;K (W, S1, S2, S3, S4, REM, MT)
+          </label>
+        </div>
+        <label id="include_events_wrap" class="check-label">
+          <input type="checkbox" id="include_events_chk" checked />
+          Include original recording events
+        </label>
+        <button type="button" id="export_save_btn" class="btn btn-sage">💾 Save to Folder</button>
+        <button type="button" id="export_preview_btn" class="btn">👁️ Preview</button>
+        <button type="button" id="export_download_btn" class="btn btn-sky hidden">⬇️ Browser Download</button>
+      </div>
+
+      <div id="export_conflict_callout" class="onera-callout is-warn hidden"></div>
+      <div id="export_unscored_callout" class="onera-callout is-warn hidden"></div>
+      <div id="export_status_callout" class="onera-callout hidden"></div>
+      <pre id="export_preview_pre" class="export-preview hidden"></pre>
+    </section>
+  </div>
+
+  <script src="/static/hypnogram.js"></script>
+  <script src="/static/waveforms.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
